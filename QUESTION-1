@@ -1,0 +1,104 @@
+import numpy as np
+grid = np.array([
+    ['S', '.', '.', '#', '.'],
+    ['.', '#', '.', '.', '.'],
+    ['.', '#', '.', '#', '.'],
+    ['.', '.', '.', '#', '.'],
+    ['#', '.', '.', '.', 'G']
+])
+
+actions = [(-1,0), (1,0), (0,-1), (0,1)]
+symbols = ['↑', '↓', '←', '→']
+
+gamma = 0.95
+def transitions(state, action):
+    r, c = state
+    dirs = [
+        action,
+        (-action[0], -action[1]),
+        (action[1], -action[0]),
+        (-action[1], action[0])
+    ]
+    probs = [0.8, 0.0, 0.1, 0.1]
+    result = []
+
+    for d, p in zip(dirs, probs):
+        nr, nc = r + d[0], c + d[1]
+
+        if (nr < 0 or nr >= 5 or nc < 0 or nc >= 5
+                or grid[nr, nc] == '#'):
+            nr, nc = r, c
+
+        result.append(((nr, nc), p))
+    return result
+V = np.zeros((5, 5))
+
+for iteration in range(500):
+    old_V = V.copy()
+
+    for r in range(5):
+        for c in range(5):
+
+            if grid[r, c] in ['#', 'S', 'G']:
+                continue
+
+            values = []
+
+            for action in actions:
+                value = 0
+
+                for next_state, prob in transitions((r, c), action):
+                    nr, nc = next_state
+
+                    if grid[nr, nc] == 'G':
+                        reward = 10
+                    elif next_state == (r, c):
+                        reward = -2
+                    else:
+                        reward = -0.2
+
+                    value += prob * (
+                        reward + gamma * old_V[nr, nc]
+                    )
+
+                values.append(value)
+
+            V[r, c] = max(values)
+
+    if np.max(np.abs(V - old_V)) < 1e-8:
+        break
+policy = np.full((5, 5), ' ')
+
+for r in range(5):
+    for c in range(5):
+
+        if grid[r, c] in ['#', 'S', 'G']:
+            policy[r, c] = grid[r, c]
+            continue
+
+        values = []
+        for action in actions:
+            value = 0
+
+            for next_state, prob in transitions((r, c), action):
+                nr, nc = next_state
+
+                if grid[nr, nc] == 'G':
+                    reward = 10
+                elif next_state == (r, c):
+                    reward = -2
+                else:
+                    reward = -0.2
+
+                value += prob * (
+                    reward + gamma * V[nr, nc]
+                )
+            values.append(value)
+        policy[r, c] = symbols[np.argmax(values)]
+print("Iterations:", iteration)
+print("\nValue Function:")
+print(np.round(V, 2))
+
+print("\nOptimal Policy:")
+for row in policy:
+    print(" ".join(row))
