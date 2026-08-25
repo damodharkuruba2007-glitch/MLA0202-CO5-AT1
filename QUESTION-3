@@ -1,0 +1,51 @@
+import numpy as np
+N = 1_000_000
+
+categories = {
+    "A": 0.40,
+    "B": 0.30,
+    "C": 0.20,
+    "D": 0.10
+}
+
+Z = 1.96
+p = 0.50
+E = 0.01
+
+n = (Z**2 * p * (1-p)) / (E**2)
+
+n = int(np.ceil(n))
+
+print("Required sample size:", n)
+
+sample = {}
+
+remaining = n
+
+for i, (category, proportion) in enumerate(categories.items()):
+
+    if i == len(categories) - 1:
+        sample[category] = remaining
+    else:
+        size = int(round(n * proportion))
+        sample[category] = size
+        remaining -= size
+
+print("\nStratified Sample:")
+for category, size in sample.items():
+    print(category, ":", size)
+
+print("\nTotal sample:", sum(sample.values()))
+
+accuracy = 0.96
+
+margin = Z * np.sqrt(
+    accuracy * (1 - accuracy) / n
+)
+
+lower = accuracy - margin
+upper = accuracy + margin
+
+print("\nEstimated accuracy:", accuracy)
+print("95% Confidence Interval:",
+      round(lower, 4), "to", round(upper, 4))
