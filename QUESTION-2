@@ -1,0 +1,43 @@
+import numpy as np
+np.random.seed(42)
+true_prob = [0.05, 0.10, 0.08, 0.15, 0.12]
+K = 5
+T = 10000
+counts = np.zeros(K, dtype=int)
+rewards = np.zeros(K)
+for i in range(K):
+    reward = np.random.rand() < true_prob[i]
+    counts[i] += 1
+    rewards[i] += reward
+for t in range(K, T):
+
+    mean_reward = rewards / counts
+
+    confidence = np.sqrt(
+        2 * np.log(t + 1) / counts
+    )
+
+    ucb = mean_reward + confidence
+
+    ad = np.argmax(ucb)
+
+    reward = np.random.rand() < true_prob[ad]
+
+    counts[ad] += 1
+    rewards[ad] += reward
+estimated_probability = rewards / counts
+print("Advertisement Statistics")
+print("------------------------")
+
+for i in range(K):
+    print(
+        "Ad", i + 1,
+        ": Selected =", counts[i],
+        ", Clicks =", int(rewards[i]),
+        ", Estimated CTR =",
+        round(estimated_probability[i], 4)
+    )
+print("\nTotal interactions:", T)
+print("Total clicks:", int(rewards.sum()))
+best_ad = np.argmax(estimated_probability) + 1
+print("Best Advertisement:", best_ad)
